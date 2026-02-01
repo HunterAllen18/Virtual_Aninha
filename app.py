@@ -37,7 +37,7 @@ with st.sidebar:
     
     with st.expander("🔐 Painel Admin"):
         senha = st.text_input("Senha", type="password")
-        is_admin = senha == "1234"
+        is_admin = senha == "32500"
 
 # --- TELA PRINCIPAL ---
 if not is_admin:
@@ -138,3 +138,4 @@ else:
                 st.success("Produto cadastrado com sucesso!")
 
                 st.rerun()
+
