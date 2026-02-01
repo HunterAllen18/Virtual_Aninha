@@ -1,141 +1,187 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 import pandas as pd
-from datetime import datetime
 import urllib.parse
-import json
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Aninha Confecções Web", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Aninha Confecções - Loja Virtual", layout="wide")
 
-# CSS para deixar com cara de App Profissional
+# Estilização para Mobile e Desktop
 st.markdown("""
     <style>
-    [data-testid="stAppViewContainer"] { background-color: #0e1117; }
-    .stButton>button { border-radius: 20px; background-color: #6c5ce7; color: white; border: none; }
-    .stButton>button:hover { background-color: #a29bfe; color: white; }
-    .product-box { border: 1px solid #333; padding: 15px; border-radius: 15px; background-color: #161b22; margin-bottom: 20px; }
+    .main { background-color: #0e1117; }
+    div.stButton > button:first-child {
+        background-color: #6c5ce7;
+        color: white;
+        border-radius: 10px;
+        width: 100%;
+    }
+    .delete-btn button {
+        background-color: #ff4b4b !important;
+        color: white !important;
+    }
+    .product-card {
+        border: 1px solid #333;
+        padding: 15px;
+        border-radius: 15px;
+        background-color: #161b22;
+        text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONEXÃO COM GOOGLE SHEETS (SIMULADA PARA EXEMPO) ---
-# Nota: Para conectar de verdade, você usaria st.connection("gsheets", type=GSheetsConnection)
-# Aqui manteremos a lógica de session_state que sincroniza com seu catálogo
-if 'estoque' not in st.session_state:
-    st.session_state.estoque = {
-        "1": {"nome": "VESTIDO FLORAL", "preco": 89.90, "estoque": 5, "cores": "Azul, Rosa", "tam": "P, M", "foto": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500"},
-        "2": {"nome": "CONJUNTO MOLETOM", "preco": 120.00, "estoque": 3, "cores": "Cinza", "tam": "G", "foto": "https://images.unsplash.com/photo-1556807457-9c4f0a491ca7?w=500"}
-    }
+# --- CONEXÃO COM GOOGLE SHEETS ---
+# Certifique-se de configurar o link da planilha no Secrets do Streamlit Cloud
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+def carregar_dados():
+    try:
+        # ttl=0 garante que os dados não fiquem em cache antigo ao atualizar
+        df = conn.read(ttl=0)
+        return df.dropna(how="all")
+    except:
+        # Se a planilha estiver vazia ou não configurada, retorna estrutura base
+        return pd.DataFrame(columns=["id", "nome", "preco", "estoque", "cores", "tam", "foto"])
+
+def salvar_mudancas(novo_df):
+    conn.update(data=novo_df)
+    st.cache_data.clear()
+    st.rerun()
+
+# --- CARGA INICIAL ---
+df_estoque = carregar_dados()
 
 if 'carrinho' not in st.session_state:
     st.session_state.carrinho = []
 
-# --- SIDEBAR: IDENTIFICAÇÃO ---
+# --- SIDEBAR: CLIENTE E ADMIN ---
 with st.sidebar:
     st.title("𝓐ninha Conf.")
-    st.markdown("---")
-    nome = st.text_input("Seu Nome", placeholder="Ex: Maria Silva").upper()
+    nome_user = st.text_input("Seu Nome (para o pedido)", "").upper()
     
-    with st.expander("🔐 Painel Admin"):
+    st.divider()
+    with st.expander("🔐 Área do Lojista"):
         senha = st.text_input("Senha", type="password")
-        is_admin = senha == "32500"
+        is_admin = (senha == "1234")
 
 # --- TELA PRINCIPAL ---
 if not is_admin:
-    # VISÃO DO CLIENTE
-    st.header(f"Olá, {nome if nome else 'bem-vinda(o)'}! 👋")
-    busca = st.text_input("🔍 O que você está procurando hoje?", "").upper()
+    # --- VISÃO DO CLIENTE ---
+    st.header(f"Olá, {nome_user if nome_user else 'bem-vinda(o)'}! ✨")
+    busca = st.text_input("🔍 O que você procura hoje?", placeholder="Digite o nome de uma peça...").upper()
 
-    col1, col2 = st.columns([2, 1])
+    col_vitrine, col_pedido = st.columns([2, 1])
 
-    with col1:
-        st.subheader("Catálogo")
-        # Grade de produtos
-        prods = [p for p in st.session_state.estoque.values() if busca in p['nome']]
-        
-        if not prods:
-            st.warning("Nenhum produto encontrado com esse nome.")
-        
-        # Criando a grade 2x2 para mobile/web
-        for i in range(0, len(prods), 2):
-            cols = st.columns(2)
-            for j in range(2):
-                if i + j < len(prods):
-                    p = prods[i+j]
-                    with cols[j]:
-                        st.markdown(f'<div class="product-box">', unsafe_allow_html=True)
-                        st.image(p['foto'], use_container_width=True)
-                        st.subheader(f"{p['nome']}")
-                        st.write(f"💰 **R$ {p['preço']:.2f}**")
-                        
-                        status = "✅ Disponível" if p['estoque'] > 0 else "❌ Esgotado"
-                        st.caption(f"Status: {status} | Tam: {p['tam']}")
-                        
-                        if p['estoque'] > 0:
-                            if st.button(f"Adicionar ao Carrinho", key=f"btn_{p['nome']}"):
-                                st.session_state.carrinho.append(p)
-                                st.toast(f"{p['nome']} adicionado!")
-                        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col2:
-        st.subheader("🛒 Meu Pedido")
-        if not st.session_state.carrinho:
-            st.info("Seu carrinho está vazio.")
+    with col_vitrine:
+        # Filtrar produtos pelo nome (busca parecida)
+        if not df_estoque.empty:
+            prods = df_estoque[df_estoque['nome'].astype(str).str.contains(busca, na=False)]
         else:
-            total = 0
+            prods = pd.DataFrame()
+
+        if prods.empty:
+            st.info("Nenhum produto encontrado no catálogo no momento.")
+        else:
+            # Exibir em Grade (2 colunas no mobile/web)
+            for i in range(0, len(prods), 2):
+                cols = st.columns(2)
+                for j in range(2):
+                    if i + j < len(prods):
+                        p = prods.iloc[i + j]
+                        with cols[j]:
+                            st.markdown('<div class="product-card">', unsafe_allow_html=True)
+                            if p['foto']:
+                                st.image(p['foto'], use_container_width=True)
+                            else:
+                                st.write("📦 Sem foto")
+                            
+                            st.subheader(p['nome'])
+                            st.write(f"**R$ {p['preco']:.2f}**")
+                            st.caption(f"Tamanhos: {p['tam']} | Cores: {p['cores']}")
+                            
+                            disp = "✅ Disponível" if p['estoque'] > 0 else "❌ Esgotado"
+                            st.write(disp)
+                            
+                            if p['estoque'] > 0:
+                                if st.button(f"🛒 Adicionar", key=f"add_{p['id']}"):
+                                    st.session_state.carrinho.append(p.to_dict())
+                                    st.toast("Adicionado!")
+                            st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_pedido:
+        st.subheader("🛒 Meu Carrinho")
+        if not st.session_state.carrinho:
+            st.write("Vazio")
+        else:
+            total_pedido = 0
             for idx, item in enumerate(st.session_state.carrinho):
-                c_item1, c_item2 = st.columns([3, 1])
-                c_item1.write(f"**{item['nome']}**\nR$ {item['preco']:.2f}")
-                if c_item2.button("❌", key=f"del_{idx}"):
+                c_c1, c_c2 = st.columns([4, 1])
+                c_c1.write(f"**{item['nome']}**\nR$ {item['preco']:.2f}")
+                if c_c2.button("🗑️", key=f"rem_{idx}"):
                     st.session_state.carrinho.pop(idx)
                     st.rerun()
-                total += item['preco']
+                total_pedido += item['preco']
             
-            st.markdown("---")
-            st.write(f"### Total: R$ {total:.2f}")
+            st.divider()
+            st.write(f"### Total: R$ {total_pedido:.2f}")
             
-            if st.button("✅ FINALIZAR NO WHATSAPP", use_container_width=True):
-                if not nome:
-                    st.error("Por favor, digite seu nome na barra lateral!")
-                else:
-                    itens_msg = ""
-                    for i in st.session_state.carrinho:
-                        itens_msg += f"- {i['nome']} (R$ {i['preco']:.2f})\n"
+            if st.button("🚀 Enviar p/ WhatsApp", use_container_width=True):
+                if nome_user:
+                    msg = f"*PEDIDO ANINHA CONFECÇÕES*\n\n👤 Cliente: {nome_user}\n"
+                    for it in st.session_state.carrinho:
+                        msg += f"- {it['nome']} (R$ {it['preco']:.2f})\n"
+                    msg += f"\n*TOTAL: R$ {total_pedido:.2f}*"
                     
-                    texto_zap = f"*NOVO PEDIDO - ANINHACONFECÇOES*\n\n👤 *Cliente:* {nome}\n\n*Itens:*\n{itens_msg}\n💰 *TOTAL: R$ {total:.2f}*"
-                    link_zap = f"https://wa.me/5581985595236?text={urllib.parse.quote(texto_zap)}"
-                    st.markdown(f'<a href="{link_zap}" target="_blank"><button style="width:100%; height:50px; background-color:#25D366; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">ABRIR WHATSAPP AGORA</button></a>', unsafe_allow_html=True)
+                    link_zap = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
+                    st.markdown(f'<a href="{link_zap}" target="_blank">CONFIRMAR NO WHATSAPP</a>', unsafe_allow_html=True)
+                else:
+                    st.error("Digite seu nome na barra lateral para finalizar!")
 
 else:
-    # VISÃO DO ADMINISTRADOR
-    st.header("⚙️ Gestão de Loja")
+    # --- VISÃO DO ADMINISTRADOR ---
+    st.title("⚙️ Painel Administrativo")
     
-    tab1, tab2 = st.tabs(["📦 Ver Estoque", "➕ Adicionar Produto"])
+    t1, t2 = st.tabs(["📦 Gerenciar Produtos", "➕ Cadastrar Novo"])
     
-    with tab1:
-        df_estoque = pd.DataFrame(st.session_state.estoque).T
-        st.table(df_estoque[['nome', 'preco', 'estoque', 'tam']])
-        if st.button("Limpar Dados (Reset)"):
-            st.session_state.estoque = {}
-            st.rerun()
+    with t1:
+        st.subheader("Produtos Cadastrados")
+        if df_estoque.empty:
+            st.info("Sua planilha está vazia.")
+        else:
+            for index, row in df_estoque.iterrows():
+                with st.container(border=True):
+                    col_det, col_acao = st.columns([4, 1])
+                    with col_det:
+                        st.write(f"**{row['nome']}**")
+                        st.caption(f"Preço: R$ {row['preco']} | Estoque: {row['estoque']} | ID: {row['id']}")
+                    with col_acao:
+                        st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+                        if st.button("🗑️ Remover", key=f"del_{row['id']}"):
+                            novo_df = df_estoque.drop(index)
+                            salvar_mudancas(novo_df)
+                            st.success("Removido!")
+                        st.markdown('</div>', unsafe_allow_html=True)
 
-    with tab2:
-        with st.form("novo_prod"):
-            f_nome = st.text_input("Nome do Produto")
-            f_preco = st.number_input("Preço", min_value=0.0)
-            f_qtd = st.number_input("Estoque", min_value=0)
+    with t2:
+        st.subheader("Nova Peça")
+        with st.form("form_add", clear_on_submit=True):
+            f_nome = st.text_input("Nome do Produto").upper()
+            c1, c2 = st.columns(2)
+            f_preco = c1.number_input("Preço", min_value=0.0)
+            f_est = c2.number_input("Qtd Estoque", min_value=0)
             f_tam = st.text_input("Tamanhos (ex: P, M, G)")
-            f_foto = st.text_input("Link da Foto (URL)")
+            f_cores = st.text_input("Cores")
+            f_foto = st.text_input("Link da Foto (Imgur/PostImages)")
             
-            if st.form_submit_button("Cadastrar Produto"):
-                new_id = str(len(st.session_state.estoque) + 1)
-                st.session_state.estoque[new_id] = {
-                    "nome": f_nome.upper(),
-                    "preco": f_preco,
-                    "estoque": f_qtd,
-                    "tam": f_tam,
-                    "foto": f_foto
-                }
-                st.success("Produto cadastrado com sucesso!")
-
-                st.rerun()
-
+            if st.form_submit_button("💾 Salvar na Nuvem"):
+                if f_nome:
+                    novo_id = str(len(df_estoque) + 101) # Gera ID simples
+                    novo_item = pd.DataFrame([{
+                        "id": novo_id, "nome": f_nome, "preco": f_preco,
+                        "estoque": f_est, "cores": f_cores, "tam": f_tam, "foto": f_foto
+                    }])
+                    df_final = pd.concat([df_estoque, novo_item], ignore_index=True)
+                    salvar_mudancas(df_final)
+                    st.success("Cadastrado com sucesso!")
+                else:
+                    st.error("O nome é obrigatório.")
