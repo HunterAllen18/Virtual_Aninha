@@ -62,7 +62,7 @@ with st.sidebar:
     st.divider()
     with st.expander("🔐 Área do Lojista"):
         senha = st.text_input("Senha", type="password")
-        is_admin = (senha == "1234")
+        is_admin = (senha == "32500")
 
 # --- TELA PRINCIPAL ---
 if not is_admin:
@@ -132,7 +132,7 @@ if not is_admin:
                         msg += f"- {it['nome']} (R$ {it['preco']:.2f})\n"
                     msg += f"\n*TOTAL: R$ {total_pedido:.2f}*"
                     
-                    link_zap = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
+                    link_zap = f"https://wa.me/5581985595236?text={urllib.parse.quote(msg)}"
                     st.markdown(f'<a href="{link_zap}" target="_blank">CONFIRMAR NO WHATSAPP</a>', unsafe_allow_html=True)
                 else:
                     st.error("Digite seu nome na barra lateral para finalizar!")
@@ -185,3 +185,4 @@ else:
                     st.success("Cadastrado com sucesso!")
                 else:
                     st.error("O nome é obrigatório.")
+
