@@ -65,7 +65,7 @@ if not is_admin:
                         st.markdown(f'<div class="product-box">', unsafe_allow_html=True)
                         st.image(p['foto'], use_container_width=True)
                         st.subheader(f"{p['nome']}")
-                        st.write(f"💰 **R$ {p['preco']:.2f}**")
+                        st.write(f"💰 **R$ {p['preço']:.2f}**")
                         
                         status = "✅ Disponível" if p['estoque'] > 0 else "❌ Esgotado"
                         st.caption(f"Status: {status} | Tam: {p['tam']}")
@@ -101,8 +101,8 @@ if not is_admin:
                     for i in st.session_state.carrinho:
                         itens_msg += f"- {i['nome']} (R$ {i['preco']:.2f})\n"
                     
-                    texto_zap = f"*NOVO PEDIDO - ANINHA*\n\n👤 *Cliente:* {nome}\n\n*Itens:*\n{itens_msg}\n💰 *TOTAL: R$ {total:.2f}*"
-                    link_zap = f"https://wa.me/5581999998888?text={urllib.parse.quote(texto_zap)}"
+                    texto_zap = f"*NOVO PEDIDO - ANINHACONFECÇOES*\n\n👤 *Cliente:* {nome}\n\n*Itens:*\n{itens_msg}\n💰 *TOTAL: R$ {total:.2f}*"
+                    link_zap = f"https://wa.me/5581985595236?text={urllib.parse.quote(texto_zap)}"
                     st.markdown(f'<a href="{link_zap}" target="_blank"><button style="width:100%; height:50px; background-color:#25D366; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">ABRIR WHATSAPP AGORA</button></a>', unsafe_allow_html=True)
 
 else:
@@ -136,4 +136,5 @@ else:
                     "foto": f_foto
                 }
                 st.success("Produto cadastrado com sucesso!")
+
                 st.rerun()
