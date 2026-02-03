@@ -4,7 +4,7 @@ import pandas as pd
 import urllib.parse
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Aninha Confecções - Gestão Oficial", layout="wide")
+st.set_page_config(page_title="Aninha Confecções - Oficial", layout="wide")
 
 st.markdown("""
     <style>
@@ -53,12 +53,12 @@ with st.sidebar:
     st.divider()
     with st.expander("🔐 Área do Administrador"):
         senha = st.text_input("Senha", type="password")
-        is_admin = (senha == "1234")
+        is_admin = (senha == "32500")
 
 # --- LÓGICA PRINCIPAL ---
 if not is_admin:
     st.header(f"Olá, {nome_user if nome_user else 'bem-vinda(o)'}! ✨")
-    busca = st.text_input("🔍 Procurar peça...", "").upper()
+    busca = st.text_input("🔍 Procurar peça...", placeholder="Ex:Camisa, Bermuda...").upper()
 
     if df_estoque.empty:
         st.info("Catálogo vazio.")
@@ -104,8 +104,8 @@ if not is_admin:
             if st.button("🚀 ENVIAR PEDIDO") and st.session_state.carrinho:
                 if nome_user:
                     resumo = "\n".join([f"- {it['nome']}" for it in st.session_state.carrinho])
-                    msg = f"*PEDIDO ANINHA*\nCliente: {nome_user}\n\n{resumo}\n\n*TOTAL: R$ {total:.2f}*"
-                    link = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
+                    msg = f"*PEDIDO - ANINHA CONFECÇÕES*\nCliente: {nome_user}\n\n{resumo}\n\n*TOTAL: R$ {total:.2f}*"
+                    link = f"https://wa.me/5581985595236?text={urllib.parse.quote(msg)}"
                     st.markdown(f'<a href="{link}" target="_blank">WHATSAPP</a>', unsafe_allow_html=True)
 
 else:
@@ -130,3 +130,4 @@ else:
             if st.form_submit_button("Salvar"):
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "cor": f_c, "preco": f_p, "estoque": f_e, "tam": f_t, "foto": f_f}])
                 atualizar_planilha(pd.concat([df_estoque, novo], ignore_index=True))
+
