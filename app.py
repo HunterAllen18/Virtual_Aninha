@@ -51,7 +51,7 @@ with st.sidebar:
 if not is_admin:
     # --- VISÃO DO CLIENTE ---
     st.header(f"Olá, {nome_cliente if nome_cliente else 'seja bem-vinda(o)'}! ✨")
-    busca = st.text_input("🔍 O que você procura?", placeholder="Ex: Camisa, Bermuda...", "").upper()
+    busca = st.text_input("🔍 O que você procura?", placeholder="Ex: Camisa, Bermuda...").upper()
 
     if df_estoque.empty:
         st.info("Catálogo em atualização. Volte logo!")
@@ -131,3 +131,4 @@ else:
             if st.form_submit_button("💾 Salvar na Planilha"):
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_nome, "cor": f_cor, "preco": f_preco, "estoque": f_est, "tam": f_tam, "foto": f_foto}])
                 salvar_dados(pd.concat([df_estoque, novo], ignore_index=True))
+
