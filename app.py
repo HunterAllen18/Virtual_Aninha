@@ -60,7 +60,7 @@ with st.sidebar:
 if not is_admin:
     # --- VISÃO DO CLIENTE ---
     st.header(f"Bem-vinda(o), {nome_cliente if nome_cliente else 'visitante'}! ✨")
-    busca = st.text_input("🔍 O que deseja procurar?", placeholder="Ex: Vestido, Blusa...").upper()
+    busca = st.text_input("🔍 O que deseja procurar?", placeholder="Ex: Camisa, Bermuda...").upper()
 
     if df_estoque.empty:
         st.info("O catálogo está a ser preparado. Volte em breve!")
@@ -133,11 +133,11 @@ if not is_admin:
                 
                 if st.button("✅ FINALIZAR PEDIDO"):
                     if nome_cliente:
-                        msg = f"*NOVO PEDIDO - ANINHA*\n👤 Cliente: {nome_cliente}\n\n"
+                        msg = f"*NOVO PEDIDO - ANINHA CONFECÇÕES*\n👤 Cliente: {nome_cliente}\n\n"
                         for it in st.session_state.carrinho:
                             msg += f"- {it['nome']} (R$ {it['preco']:.2f})\n"
                         msg += f"\n*TOTAL: R$ {total_cart:.2f}*"
-                        link_zap = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
+                        link_zap = f"https://wa.me/5581986707825?text={urllib.parse.quote(msg)}"
                         st.markdown(f'<a href="{link_zap}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:10px; border-radius:10px; cursor:pointer;">ABRIR WHATSAPP</button></a>', unsafe_allow_html=True)
                     else:
                         st.error("Por favor, digite o seu nome na barra lateral.")
@@ -189,3 +189,4 @@ else:
                     st.success("Cadastrado!")
                 else:
                     st.error("Preencha o nome e a cor!")
+
