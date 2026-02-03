@@ -53,7 +53,7 @@ with st.sidebar:
     st.divider()
     with st.expander("🔐 Painel do Lojista"):
         senha = st.text_input("Senha Admin", type="password")
-        is_admin = (senha == "1234")
+        is_admin = (senha == "32500")
 
 # --- LÓGICA DA INTERFACE ---
 
@@ -189,4 +189,5 @@ else:
                     st.success("Cadastrado!")
                 else:
                     st.error("Preencha o nome e a cor!")
+
 
