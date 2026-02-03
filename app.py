@@ -6,7 +6,6 @@ import urllib.parse
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Aninha Confecções - Gestão Oficial", layout="wide")
 
-# Estilização CSS
 st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] { background-color: #0e1117; }
@@ -20,26 +19,28 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- CONEXÃO COM GOOGLE SHEETS ---
-# Mudança de segurança: Garantindo que a conexão seja estabelecida corretamente
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def carregar_dados():
     try:
-        # ttl=0 garante dados em tempo real
-        return conn.read(ttl=0).dropna(how="all")
+        # Lemos os dados e forçamos o preenchimento de valores vazios para evitar o erro de numpy
+        df = conn.read(ttl=0)
+        df = df.dropna(how="all")
+        # Converte coluna de preço para numérico e preenche erros com 0
+        df['preco'] = pd.to_numeric(df['preco'], errors='coerce').fillna(0.0)
+        # Garante que nome e cor sejam strings
+        df['nome'] = df['nome'].astype(str).str.upper()
+        df['cor'] = df['cor'].astype(str).str.upper()
+        return df
     except Exception as e:
-        st.error(f"Erro ao ler planilha: {e}")
+        st.error(f"Erro na leitura: {e}")
         return pd.DataFrame(columns=["id", "nome", "cor", "preco", "estoque", "tam", "foto"])
 
 def atualizar_planilha(novo_df):
-    try:
-        conn.update(data=novo_df)
-        st.cache_data.clear()
-        st.rerun()
-    except Exception as e:
-        st.error(f"Erro ao salvar: {e}")
+    conn.update(data=novo_df)
+    st.cache_data.clear()
+    st.rerun()
 
-# --- CARREGAMENTO ---
 df_estoque = carregar_dados()
 
 if 'carrinho' not in st.session_state:
@@ -52,17 +53,19 @@ with st.sidebar:
     st.divider()
     with st.expander("🔐 Área do Administrador"):
         senha = st.text_input("Senha", type="password")
-        is_admin = (senha == "32500")
+        is_admin = (senha == "1234")
 
 # --- LÓGICA PRINCIPAL ---
 if not is_admin:
     st.header(f"Olá, {nome_user if nome_user else 'bem-vinda(o)'}! ✨")
-    busca = st.text_input("🔍 Procurar peça...", placeholder="Ex: Camisa, Bermuda...").upper()
+    busca = st.text_input("🔍 Procurar peça...", "").upper()
 
     if df_estoque.empty:
         st.info("Catálogo vazio.")
     else:
-        df_f = df_estoque[df_estoque['nome'].astype(str).str.contains(busca, na=False)]
+        # Filtro seguro
+        df_f = df_estoque[df_estoque['nome'].str.contains(busca, na=False)]
+        
         col_loja, col_carrinho = st.columns([2, 1])
 
         with col_loja:
@@ -75,33 +78,35 @@ if not is_admin:
                         cores = variantes['cor'].unique()
                         cor_sel = st.selectbox(f"Cor:", cores, key=f"s_{nome_p}")
                         item = variantes[variantes['cor'] == cor_sel].iloc[0]
-                        st.write(f"💰 **R$ {item['preco']:.2f}**")
+                        
+                        # FORMATAÇÃO SEGURA DE PREÇO
+                        preco_val = float(item['preco'])
+                        st.write(f"💰 **R$ {preco_val:.2f}**")
+                        
                         st.caption(f"Tam: {item['tam']}")
                         
                         if item['estoque'] > 0:
                             if st.button(f"🛒 Adicionar {cor_sel}", key=f"b_{item['id']}"):
-                                st.session_state.carrinho.append({"nome": f"{nome_p} ({cor_sel})", "preco": item['preco']})
+                                st.session_state.carrinho.append({"nome": f"{nome_p} ({cor_sel})", "preco": preco_val})
                                 st.toast("Adicionado!")
                     with c_img:
-                        if item['foto']:
-                            # Mudança aqui: use_container_width é o padrão novo
+                        if item['foto'] and str(item['foto']).startswith('http'):
                             st.image(item['foto'], use_container_width=True)
+                        else:
+                            st.write("📦 Sem foto")
 
         with col_carrinho:
             st.subheader("🛒 Carrinho")
-            total = sum(item['preco'] for item in st.session_state.carrinho)
+            total = sum(float(item['preco']) for item in st.session_state.carrinho)
             for i, item in enumerate(st.session_state.carrinho):
-                c1, c2 = st.columns([4, 1])
-                c1.write(f"{item['nome']} - R$ {item['preco']:.2f}")
-                if c2.button("🗑️", key=f"rm_{i}"):
-                    st.session_state.carrinho.pop(i)
-                    st.rerun()
+                st.write(f"{item['nome']} - R$ {item['preco']:.2f}")
             
-            if st.button("🚀 ENVIAR PEDIDO"):
-                if nome_user and st.session_state.carrinho:
+            if st.button("🚀 ENVIAR PEDIDO") and st.session_state.carrinho:
+                if nome_user:
                     resumo = "\n".join([f"- {it['nome']}" for it in st.session_state.carrinho])
-                    msg = f"*PEDIDO ANINHA CONFECÇÕES*\nCliente: {nome_user}\n\n{resumo}\n\n*TOTAL: R$ {total:.2f}*"
-                    st.markdown(f'<a href="https://wa.me/5581986707825?text={urllib.parse.quote(msg)}" target="_blank">WHATSAPP</a>', unsafe_allow_html=True)
+                    msg = f"*PEDIDO ANINHA*\nCliente: {nome_user}\n\n{resumo}\n\n*TOTAL: R$ {total:.2f}*"
+                    link = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
+                    st.markdown(f'<a href="{link}" target="_blank">WHATSAPP</a>', unsafe_allow_html=True)
 
 else:
     # --- ADMIN ---
