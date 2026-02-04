@@ -29,13 +29,16 @@ def carregar_dados():
         # Lê a planilha em tempo real
         df = conn.read(ttl=0).dropna(how="all")
         
-        # Limpeza e padronização dos dados
+        # Limpeza e padronização dos dados (Correção do Erro 'Series' object has no attribute 'strip')
         df['preco'] = pd.to_numeric(df['preco'], errors='coerce').fillna(0.0)
         df['estoque'] = pd.to_numeric(df['estoque'], errors='coerce').fillna(0).astype(int)
-        df['nome'] = df['nome'].astype(str).str.upper().strip()
-        df['cor'] = df['cor'].astype(str).str.upper().strip()
-        df['tam'] = df['tam'].astype(str).str.upper().strip()
-        df['foto'] = df['foto'].astype(str).replace('nan', '')
+        
+        # O segredo é usar .str.strip() em vez de apenas .strip()
+        df['nome'] = df['nome'].astype(str).str.upper().str.strip()
+        df['cor'] = df['cor'].astype(str).str.upper().str.strip()
+        df['tam'] = df['tam'].astype(str).str.upper().str.strip()
+        
+        df['foto'] = df['foto'].astype(str).replace('nan', '').str.strip()
         return df
     except Exception as e:
         st.error(f"Erro ao carregar dados: {e}")
@@ -191,3 +194,4 @@ else:
                     salvar(pd.concat([df_estoque, novo_item], ignore_index=True))
                 else:
                     st.error("Preencha Nome, Cor e Tamanho!")
+
