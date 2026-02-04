@@ -153,8 +153,8 @@ if not is_admin:
                 st.write(f"### Total: R$ {total:.2f}")
                 if st.button("🚀 FINALIZAR PEDIDO") and nome_user:
                     resumo = "\n".join([f"- {it['qtd']}x {it['nome']} ({it['cor']}-{it['tam']})" for it in st.session_state.carrinho])
-                    msg = f"*PEDIDO ANINHA*\n👤 Cliente: {nome_user}\n\n*Produtos:*\n{resumo}\n\n*Total: R$ {total:.2f}*"
-                    link = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
+                    msg = f"*NOVO PEDIDO - ANINHA CONFECÇÕES*\n👤 Cliente: {nome_user}\n\n*Produtos:*\n{resumo}\n\n*Total: R$ {total:.2f}*"
+                    link = f"https://wa.me/5581986707825?text={urllib.parse.quote(msg)}"
                     st.markdown(f'<a href="{link}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:10px; font-weight:bold; width:100%; cursor:pointer;">ENVIAR PARA WHATSAPP</button></a>', unsafe_allow_html=True)
                 elif not nome_user:
                     st.warning("Informe seu nome na barra lateral!")
@@ -182,3 +182,4 @@ else:
             if st.form_submit_button("💾 Salvar"):
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "tipo": f_tipo, "novidade": f_nov, "cor": f_c, "tam": f_t, "preco": f_p, "estoque": f_e, "foto": f_f}])
                 salvar(pd.concat([df_estoque, novo], ignore_index=True))
+
