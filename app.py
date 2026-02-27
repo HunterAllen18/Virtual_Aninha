@@ -115,14 +115,17 @@ if not st.session_state.cliente_logado:
 # --- SIDEBAR (APÓS LOGIN) ---
 with st.sidebar:
     st.title("𝓐ninha Conf.")
-    st.write(f"👤 **{st.session_state.nome_cliente}**")
-    if st.button("Sair/Trocar Cliente"):
-        st.session_state.cliente_logado = False
-        st.rerun()
-    st.divider()
-    with st.expander("🔐 Admin"):
-        senha = st.text_input("Senha", type="password")
-        is_admin = (senha == "32500")
+    if st.session_state.cliente_logado:
+        st.write(f"👤 {st.session_state.nome_cliente}")
+        if st.button("Sair/Trocar Cliente"):
+            st.session_state.cliente_logado = False
+            st.rerun()
+
+# --- ATALHO DO ADMIN NO RODAPÉ DA PÁGINA ---
+st.markdown("---")
+with st.expander("🔐 Área do Administrador"):
+    senha = st.text_input("Senha Admin", type="password")
+    is_admin = (senha == "32500")
 
 # --- LÓGICA DE FILTRO INICIAL ---
 tem_novidade = not df_estoque[df_estoque['novidade'] == 'SIM'].empty if not df_estoque.empty else False
@@ -211,3 +214,4 @@ else:
             if st.form_submit_button("Salvar"):
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "tipo": f_tipo, "novidade": f_nov, "cor": f_c, "tam": f_t, "preco": f_p, "estoque": f_e, "foto": f_f}])
                 salvar(pd.concat([df_estoque, novo], ignore_index=True))
+
