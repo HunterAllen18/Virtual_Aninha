@@ -5,22 +5,46 @@ import urllib.parse
 import re
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
+# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Aninha Confecções - Vitrine", layout="wide")
 
-# CSS para Customização e Ocultação do Perfil/Menu
 st.markdown("""
     <style>
-    /* Ocultar elementos do Streamlit Cloud */
+    /* 1. Esconde a barra superior (header) */
     header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;}
     
-    /* Cores e Estilo Geral */
+    /* 2. Esconde o menu de opções (três pontinhos) */
+    #MainMenu {visibility: hidden;}
+    
+    /* 3. Esconde o rodapé padrão do Streamlit */
+    footer {visibility: hidden;}
+    
+    /* 4. REMOVE A BARRA 'MANAGE APP' E O SELO 'MADE WITH STREAMLIT' */
+    .stAppDeployButton {display:none;}
+    [data-testid="stStatusWidget"] {visibility: hidden;}
+    .viewerBadge_container__1QSob {display: none !important;}
+    .st-emotion-cache-zq5wmm {display: none !important;}
+    div[data-testid="stStatusWidget"] {visibility: hidden;}
+    
+    /* Estilo Geral da Loja */
     [data-testid="stAppViewContainer"] { background-color: #0e1117; }
     .stButton>button { border-radius: 10px; background-color: #6c5ce7; color: white; width: 100%; font-weight: bold; }
-    .product-card { border: 1px solid #333; padding: 20px; border-radius: 15px; background-color: #161b22; }
     h1, h2, h3 { color: #a29bfe; }
+    
+    /* Estilo do botão de suporte */
+    .support-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: transparent;
+        color: #25D366;
+        border: 2px solid #25D366;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+        width: 100%;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -87,7 +111,26 @@ if not st.session_state.cliente_logado:
                 st.session_state.nome_cliente, st.session_state.cpf_cliente = nome_input, cpf_input
                 st.session_state.cliente_logado = True
                 st.rerun()
+        
+        # Botão de Suporte via WhatsApp (Link direto)
+        msg_suporte = urllib.parse.quote("Olá! Estou com dificuldade para acessar o catálogo da loja.")
+        # Lembre-se de colocar seu número real abaixo
+        link_suporte = f"https://wa.me/5581985595236?text={msg_suporte}"
+        st.markdown(f'<a href="{link_suporte}" target="_blank" class="support-btn">💬 Dificuldade no acesso? Fale conosco</a>', unsafe_allow_html=True)
+        
     st.stop()
+
+# --- SIDEBAR (APÓS LOGIN) ---
+with st.sidebar:
+    st.title("𝓐ninha Conf.")
+    st.write(f"👤 **{st.session_state.nome_cliente}**")
+    if st.button("Sair/Trocar Cliente"):
+        st.session_state.cliente_logado = False
+        st.rerun()
+    st.divider()
+    with st.expander("🔐 Admin"):
+        senha = st.text_input("Senha", type="password")
+        is_admin = (senha == "32500")
 
 # --- LÓGICA DE FILTRO INICIAL ---
 tem_novidade = not df_estoque[df_estoque['novidade'] == 'SIM'].empty if not df_estoque.empty else False
@@ -153,9 +196,9 @@ if not is_admin:
                 st.write(f"### Total: R$ {total:.2f}")
                 if st.button("🚀 FINALIZAR"):
                     resumo = "\n".join([f"- {it['qtd']}x {it['nome']} ({it['cor']}-{it['tam']})" for it in st.session_state.carrinho])
-                    msg = f"*PEDIDO ANINHA*\n👤 Cliente: {st.session_state.nome_cliente}\n🆔 CPF: {st.session_state.cpf_cliente}\n\n*Produtos:*\n{resumo}\n\n*Total: R$ {total:.2f}*"
-                    link = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
-                    st.markdown(f'<a href="{link}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:10px; font-weight:bold; width:100%;">ENVIAR PARA WHATSAPP</button></a>', unsafe_allow_html=True)
+                    msg = f"*PEDIDO NOVO!!*\n👤 Cliente: {st.session_state.nome_cliente}\n🆔 CPF: {st.session_state.cpf_cliente}\n\n*Produtos:*\n{resumo}\n\n*Total: R$ {total:.2f}*"
+                    link = f"https://wa.me/5581986707825?text={urllib.parse.quote(msg)}"
+                    st.markdown(f'<a href="{link}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:10px; font-weight:bold; width:100%; cursor:pointer;">ENVIAR PARA WHATSAPP</button></a>', unsafe_allow_html=True)
 else:
     # --- ADMIN ---
     st.title("⚙️ Admin")
@@ -180,8 +223,9 @@ else:
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 1, 1])
 with col3:
+    # Um pequeno expander com um caractere discreto
     with st.expander("."):
         senha_input = st.text_input("Senha Admin", type="password")
-        if senha_input == "32500":
+        if senha_input == "1234":
             st.session_state.is_admin = True
             st.rerun()
