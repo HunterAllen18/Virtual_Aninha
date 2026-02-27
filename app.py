@@ -16,6 +16,17 @@ st.markdown("""
     .stHorizontalBlock { gap: 10px; }
     </style>
     """, unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    /* Esconder o menu superior direito (ícone do GitHub e links) */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Remove o botão 'Made with Streamlit' e o link do GitHub */
+    .viewerBadge_container__1QSob {display: none !important;}
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- CONEXÃO COM GOOGLE SHEETS ---
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -182,4 +193,5 @@ else:
             if st.form_submit_button("💾 Salvar"):
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "tipo": f_tipo, "novidade": f_nov, "cor": f_c, "tam": f_t, "preco": f_p, "estoque": f_e, "foto": f_f}])
                 salvar(pd.concat([df_estoque, novo], ignore_index=True))
+
 
