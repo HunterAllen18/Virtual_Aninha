@@ -9,23 +9,22 @@ st.set_page_config(page_title="Aninha Confecções - Vitrine", layout="wide")
 
 st.markdown("""
     <style>
-    /* 1. Esconde a barra superior (header) */
+    /* 1. Esconde a barra superior padrão do Streamlit (header) */
     header {visibility: hidden;}
     
-    /* 2. Esconde o menu de opções (três pontinhos) */
-    #MainMenu {visibility: hidden;}
+    /* 2. Remove o botão de deploy e o selo 'Made with Streamlit' */
+    .stAppDeployButton {display:none;}
+    .viewerBadge_container__1QSob {display: none !important;}
     
-    /* 3. Esconde o rodapé padrão do Streamlit */
+    /* 3. Esconde o rodapé padrão */
     footer {visibility: hidden;}
     
-    /* 4. REMOVE A BARRA 'MANAGE APP' E O SELO 'MADE WITH STREAMLIT' */
-    .stAppDeployButton {display:none;}
-    [data-testid="stStatusWidget"] {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;}
-    .st-emotion-cache-zq5wmm {display: none !important;}
-    div[data-testid="stStatusWidget"] {visibility: hidden;}
+    /* 4. GARANTE QUE O MENU LATERAL ESTEJA VISÍVEL */
+    [data-testid="stSidebar"] {
+        display: flex !important;
+    }
     
-    /* Estilo Geral da Loja */
+    /* Estilos Visuais da Loja */
     [data-testid="stAppViewContainer"] { background-color: #0e1117; }
     .stButton>button { border-radius: 10px; background-color: #6c5ce7; color: white; width: 100%; font-weight: bold; }
     h1, h2, h3 { color: #a29bfe; }
@@ -218,4 +217,5 @@ else:
             if st.form_submit_button("Salvar"):
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "tipo": f_tipo, "novidade": f_nov, "cor": f_c, "tam": f_t, "preco": f_p, "estoque": f_e, "foto": f_f}])
                 salvar(pd.concat([df_estoque, novo], ignore_index=True))
+
 
