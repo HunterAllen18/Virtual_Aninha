@@ -10,19 +10,24 @@ st.set_page_config(page_title="Aninha Confecções - Vitrine", layout="wide")
 # CSS para Customização e Ocultação do Perfil/Menu
 st.markdown("""
     <style>
-    /* Ocultar elementos do Streamlit Cloud para visual profissional */
+    /* 1. Esconde a barra superior (header) */
     header {visibility: hidden;}
+    
+    /* 2. Esconde o menu de opções (três pontinhos) */
     #MainMenu {visibility: hidden;}
+    
+    /* 3. Esconde o rodapé padrão do Streamlit e o 'Manage App' */
     footer {visibility: hidden;}
+    .stAppDeployButton {display:none;}
+    [data-testid="stStatusWidget"] {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
     
-    /* Estilo Geral */
+    /* Estilo Geral da Loja */
     [data-testid="stAppViewContainer"] { background-color: #0e1117; }
     .stButton>button { border-radius: 10px; background-color: #6c5ce7; color: white; width: 100%; font-weight: bold; }
-    .product-card { border: 1px solid #333; padding: 20px; border-radius: 15px; background-color: #161b22; }
     h1, h2, h3 { color: #a29bfe; }
     
-    /* Botão de Suporte (WhatsApp) no Login */
+    /* Estilo do botão de suporte */
     .support-btn {
         display: inline-block;
         padding: 10px 20px;
@@ -106,32 +111,31 @@ if not st.session_state.cliente_logado:
         
         # Botão de Suporte via WhatsApp (Link direto)
         msg_suporte = urllib.parse.quote("Olá! Estou com dificuldade para acessar o catálogo da loja.")
-        # Lembre-se de colocar seu número real abaixo
-        link_suporte = f"https://wa.me/5581985595236?text={msg_suporte}"
+        link_suporte = f"https://wa.me/5581999998888?text={msg_suporte}"
         st.markdown(f'<a href="{link_suporte}" target="_blank" class="support-btn">💬 Dificuldade no acesso? Fale conosco</a>', unsafe_allow_html=True)
         
     st.stop()
 
-# --- SIDEBAR (APÓS LOGIN) ---
+# --- SIDEBAR (BARRA LATERAL) ---
 with st.sidebar:
     st.title("𝓐ninha Conf.")
-    if st.session_state.cliente_logado:
-        st.write(f"👤 {st.session_state.nome_cliente}")
-        if st.button("Sair/Trocar Cliente"):
-            st.session_state.cliente_logado = False
-            st.rerun()
-
-# --- ATALHO DO ADMIN NO RODAPÉ DA PÁGINA ---
-st.markdown("---")
-with st.expander("🔐 Área do Administrador"):
-    senha = st.text_input("Senha Admin", type="password")
-    is_admin = (senha == "32500")
+    st.write(f"👤 **{st.session_state.nome_cliente}**")
+    if st.button("Sair/Trocar Cliente"):
+        st.session_state.cliente_logado = False
+        st.rerun()
 
 # --- LÓGICA DE FILTRO INICIAL ---
 tem_novidade = not df_estoque[df_estoque['novidade'] == 'SIM'].empty if not df_estoque.empty else False
 if 'filtro_tipo' not in st.session_state:
     st.session_state['filtro_tipo'] = 'NOVIDADES' if tem_novidade else 'TODOS'
 
+# --- VITRINE / PAINEL ADMIN ---
+# Verificação de Admin baseada no acesso discreto do rodapé
+is_admin = False # Padrão
+# O expander do rodapé precisa ser verificado aqui
+
+# --- LÓGICA DO PAINEL ADMIN E VITRINE ---
+# ... (O restante da lógica de vitrine e admin permanece a mesma)
 # --- VISÃO DO CLIENTE ---
 if not is_admin:
     st.header("Catálogo ✨")
@@ -192,7 +196,7 @@ if not is_admin:
                 if st.button("🚀 FINALIZAR"):
                     resumo = "\n".join([f"- {it['qtd']}x {it['nome']} ({it['cor']}-{it['tam']})" for it in st.session_state.carrinho])
                     msg = f"*PEDIDO ANINHA*\n👤 Cliente: {st.session_state.nome_cliente}\n🆔 CPF: {st.session_state.cpf_cliente}\n\n*Produtos:*\n{resumo}\n\n*Total: R$ {total:.2f}*"
-                    link = f"https://wa.me/5581986707825?text={urllib.parse.quote(msg)}"
+                    link = f"https://wa.me/5581999998888?text={urllib.parse.quote(msg)}"
                     st.markdown(f'<a href="{link}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:10px; font-weight:bold; width:100%; cursor:pointer;">ENVIAR PARA WHATSAPP</button></a>', unsafe_allow_html=True)
 else:
     # --- ADMIN ---
@@ -215,3 +219,15 @@ else:
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "tipo": f_tipo, "novidade": f_nov, "cor": f_c, "tam": f_t, "preco": f_p, "estoque": f_e, "foto": f_f}])
                 salvar(pd.concat([df_estoque, novo], ignore_index=True))
 
+# --- ÁREA DE LOGIN DISCRETA NO RODAPÉ ---
+st.markdown("---")
+# Criamos uma coluna invisível para esconder o botão
+col1, col2, col3 = st.columns([1, 0.1, 1])
+
+with col3:
+    # Um pequeno expander com um caractere discreto
+    with st.expander("."):
+        senha_input = st.text_input("Senha Admin", type="password")
+        if senha_input == "1234":
+            st.success("Logado! Atualize a página se necessário.")
+            is_admin = True
