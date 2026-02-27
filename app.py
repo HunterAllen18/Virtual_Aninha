@@ -5,7 +5,6 @@ import urllib.parse
 import re
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Aninha Confecções - Vitrine", layout="wide")
 
 st.markdown("""
@@ -220,12 +219,3 @@ else:
                 novo = pd.DataFrame([{"id": str(len(df_estoque)+101), "nome": f_n, "tipo": f_tipo, "novidade": f_nov, "cor": f_c, "tam": f_t, "preco": f_p, "estoque": f_e, "foto": f_f}])
                 salvar(pd.concat([df_estoque, novo], ignore_index=True))
 
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 1, 1])
-with col3:
-    # Um pequeno expander com um caractere discreto
-    with st.expander("."):
-        senha_input = st.text_input("Senha Admin", type="password")
-        if senha_input == "1234":
-            st.session_state.is_admin = True
-            st.rerun()
